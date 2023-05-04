@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "bd03145d-d262-4b69-a20f-553db8634c89": {
+      "ProjectGuid": "bd03145d-d262-4b69-a20f-553db8634c89",
+      "DisplayName": "ExchangeRate",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

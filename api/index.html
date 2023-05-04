@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="signalr.min.js"></script>
+    <script src="jquery.min.js"></script>
+
+    <script>
+        $(document).ready(() => {
+            // wwwroot/main.js
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("https://localhost:7253/currencyHub")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            // Döviz kuru güncellemesini yakalar ve ekrana yansıtır
+            connection.on("ReceiveCurrencyRate", (currency, rate) => {
+                const currencyRateElement = document.getElementById("currencyRate");
+                currencyRateElement.textContent = `${currency}: ${rate.toFixed(4)}`;
+            });
+
+            // SignalR bağlantısını başlatır
+            connection.start().catch(err => console.error(err.toString()));
+
+            // Döviz kuru güncellemelerini istemek için belirli aralıklarla API isteği yapar
+            setInterval(async () => {
+                try {
+                    const response = await fetch("https://localhost:7253/api/currency/update");
+                    if (!response.ok) {
+                        throw new Error("Failed to update currency rate");
+                    }
+
+                    console.log(response);
+                } catch (error) {
+                    console.error(error);
+                }
+            }, 5000); // 5 saniyede bir güncelleme yapılıyor. İsteğe bağlı olarak değiştirilebilir.
+
+        })
+    </script>
+
+    <style>
+        /* wwwroot/styles.css */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Döviz Kuru</h1>
+    <p id="currencyRate"></p>
+</body>
+
+</html>
