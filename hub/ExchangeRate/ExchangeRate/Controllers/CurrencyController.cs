@@ -9,6 +9,7 @@ public class CurrencyController : ControllerBase
 {
     private readonly CurrencyService _currencyService;
     private readonly IHubContext<CurrencyHub> _currencyHub;
+    private Dictionary<string, decimal> _previousRates = new Dictionary<string, decimal>();
 
     public CurrencyController(CurrencyService currencyService, IHubContext<CurrencyHub> currencyHub)
     {
@@ -17,12 +18,31 @@ public class CurrencyController : ControllerBase
     }
 
     [HttpGet("update")]
-    public async Task<IActionResult> UpdateCurrencyRate()
+    // Örnek API tarafý kodu
+
+    public async Task<IActionResult> UpdateCurrencyRates()
     {
-        var baseCurrency = "USD";
-        var targetCurrency = "TRY";
-        var rate = await _currencyService.GetCurrencyRateAsync(baseCurrency, targetCurrency);
-        await _currencyHub.Clients.All.SendAsync("ReceiveCurrencyRate", targetCurrency, rate);
+        var baseCurrency = "TRY";
+        var targetCurrencies = new[] { "USD", "EUR", "GBP" };
+
+        var currentRates = await _currencyService.GetCurrencyRatesAsync(baseCurrency, targetCurrencies);
+
+        foreach (var targetCurrency in targetCurrencies)
+        {
+            // Önceki döviz kuru deðerini elde etmek için
+            _previousRates.TryGetValue(targetCurrency, out decimal previousRate);
+
+            decimal currentRate = currentRates[targetCurrency];
+            decimal change = currentRate - previousRate; // Döviz kuru deðiþimi hesaplanýyor
+
+            await _currencyHub.Clients.All.SendAsync("ReceiveCurrencyRate", $"{baseCurrency}/{targetCurrency}", currentRate, change);
+
+            // Þimdiki deðeri önceki deðer olarak sakla
+            _previousRates[targetCurrency] = currentRate;
+        }
+
         return Ok();
     }
+
+
 }
